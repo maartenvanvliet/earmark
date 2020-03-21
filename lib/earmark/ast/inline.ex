@@ -1,4 +1,6 @@
 defmodule Earmark.Ast.Inline do
+  # TODO: REMOVE ME
+  import Dbg
 
   @moduledoc false
 
@@ -16,13 +18,13 @@ defmodule Earmark.Ast.Inline do
   def convert(src, lnb, context)
   def convert(list, lnb, context) when is_list(list),
     do: _convert(Enum.join(list, "\n"), lnb, context, true)
-  def convert(src, lnb, context), do: _convert(src, lnb, context, true)
+  def convert(src, lnb, context), do: _convert(src, lnb, context, true) |> dbg(:convert)
 
   defp _convert(src, current_lnb, context, use_linky?)
   defp _convert("", _, context, _), do: context
   defp _convert(src, current_lnb, context, use_linky?) do
     case _convert_next(src, current_lnb, context, use_linky?) do
-      {src1, lnb1, context1, use_linky1?} -> _convert(src1, lnb1, context1, use_linky1?)
+      {src1, lnb1, context1, use_linky1?} ->_convert(src1, lnb1, context1, use_linky1?)
       x -> raise "Internal Conversion Error\n\n#{inspect x}"
     end
   end
@@ -145,8 +147,8 @@ defmodule Earmark.Ast.Inline do
   defp converter_for_footnote({src, lnb, context, use_linky?}) do
     case Regex.run(context.rules.footnote, src) do
       [match, id] ->
-        case footnote_link(context, match, id) do
-          {:ok, out} -> {behead(src, match), lnb, prepend(context, out), use_linky?}
+        case _footnote_link(context, match, id) do
+          {:ok, {out, context1}} -> {behead(src, match), lnb, prepend(context1, out), use_linky?}
           _ -> nil
         end
 
@@ -319,10 +321,10 @@ defmodule Earmark.Ast.Inline do
     end
   end
 
-  defp footnote_link(context, _match, id) do
+  defp _footnote_link(context, _match, id) do
     case Map.fetch(context.footnotes, id) do
-      {:ok, %{number: number}} ->
-        {:ok, render_footnote_link("fn:#{number}", "fnref:#{number}", number)}
+      {:ok, %Earmark.Block.FnDef{id: number}} ->
+        {:ok, render_footnote_link("fn:#{number}", "fnref:#{number}", number, context)}
       _ ->
         nil
     end

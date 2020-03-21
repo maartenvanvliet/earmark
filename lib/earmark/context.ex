@@ -16,6 +16,7 @@ defmodule Earmark.Context do
             links: Map.new(),
             rules: nil,
             footnotes: Map.new(),
+            unused_fns: MapSet.new(),
             value: []
 
   ##############################################################################
@@ -24,7 +25,6 @@ defmodule Earmark.Context do
 
   defp noop(text), do: text
 
-  @doc false
   # Convenience method to append to the value list
   # def append(%__MODULE__{value: value} = ctx, prep), do: %{ctx | value: [value | prep]}
 
@@ -35,7 +35,7 @@ defmodule Earmark.Context do
     %{context | value: nv}
   end
 
-  @doc false
+
   # Convenience method to prepend to the value list
   def prepend(context, ast, messages \\ [])
   def prepend(%__MODULE__{value: value} = ctx, prep, messages) do
@@ -75,18 +75,24 @@ defmodule Earmark.Context do
   @doc false
   # this is called by the command line processor to update
   # the inline-specific rules in light of any options
-  def update_context() do
-    update_context(%Earmark.Context{})
+  def update_context(footnotes) do
+    update_context(%Earmark.Context{}, footnotes)
   end
-  def update_context(context = %Earmark.Context{options: options}) do
+  def update_context(context = %Earmark.Context{options: options}, footnotes) do
     context = %{context | rules: rules_for(options)}
+    context1 = _mk_footnotes(context, footnotes)
 
     if options.smartypants do
-      put_in(context.options.do_smartypants, &smartypants/1)
+      put_in(context1.options.do_smartypants, &_smartypants/1)
     else
-      put_in(context.options.do_smartypants, &noop/1)
+      put_in(context1.options.do_smartypants, &noop/1)
     end
   end
+
+  @doc """
+  When a footnote is rendered remove its id from the unused_fns so that there will be no warning at the end
+  """
+  def use_footnote(context, fn_id), do: %{context|unused_fns: MapSet.delete(context.unused_fns, fn_id)}
 
   #                 ( "[" .*? "]"n or anything w/o {"[", "]"}* or "]" ) *
   @link_text ~S{(?:\[[^]]*\]|[^][]|\])*}
@@ -165,7 +171,7 @@ defmodule Earmark.Context do
 
   # Smartypants transformations convert quotes to the appropriate curly
   # variants, and -- and ... to – and …
-  defp smartypants(text) do
+  defp _smartypants(text) do
     text
     |> replace(~r{--}, "—")
     |> replace(~r{(^|[-—/\(\[\{"”“\s])'}, "\\1‘")
@@ -175,6 +181,17 @@ defmodule Earmark.Context do
     |> replace(~r{\.\.\.}, "…")
   end
 
+  defp _mk_footnotes(context, footnotes) do
+    %{context | footnotes: _mk_footnotes_map(footnotes), unused_fns: _mk_footnotes_set(footnotes)}
+  end
+  defp _mk_footnotes_map(footnotes) do
+    footnotes
+    |> Enum.reduce(%{}, &Map.put(&2, &1.id, &1))
+  end
+  defp _mk_footnotes_set(footnotes) do
+    footnotes
+    |> Enum.reduce(MapSet.new, &MapSet.put(&2, &1.id))
+  end
 end
 
 # SPDX-License-Identifier: Apache-2.0

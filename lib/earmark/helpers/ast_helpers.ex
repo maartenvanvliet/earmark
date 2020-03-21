@@ -27,8 +27,11 @@ defmodule Earmark.Helpers.AstHelpers do
   end
 
   @doc false
-  def render_footnote_link(ref, backref, number) do
-    {"a", [{"href", "##{ref}"}, {"id", backref}, {"class", "footnote"}, {"title", "see footnote"}], [to_string(number)]}
+  def render_footnote_link(ref, backref, number, context) do
+    {
+      {"a", [{"href", "##{ref}"}, {"id", backref}, {"class", "footnote"}, {"title", "see footnote"}], [to_string(number)]},
+      Earmark.Context.use_footnote(context, number)
+    }
   end
 
   @doc false

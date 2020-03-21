@@ -17,6 +17,7 @@ defmodule Regressions.I119FootnotesInsideLiTest do
       []}
   end
 
+
   defp with_fn(md), do: Earmark.as_html(md, %Earmark.Options{footnotes: true})
   defp without_fn(md), do: Earmark.as_html(md, %Earmark.Options{footnotes: false})
 end

@@ -1,4 +1,6 @@
 defmodule Earmark.AstRenderer do
+  # TODO: REMOVE ME
+  import Dbg
   alias Earmark.Block
   alias Earmark.Context
   alias Earmark.Options
@@ -27,11 +29,11 @@ defmodule Earmark.AstRenderer do
     _render(blocks, prepend(context1, context.value), loose?)
   end
 
-  defp render_block(block, context, loose?)
+  defp _render_block(block, context, loose?)
   #############
   # Paragraph #
   #############
-  defp render_block(%Block.Para{lnb: lnb, lines: lines, attrs: attrs}, context, loose?) do
+  defp _render_block(%Block.Para{lnb: lnb, lines: lines, attrs: attrs}, context, loose?) do
     context1 = convert(lines, lnb, context)
     value    = context1.value |> Enum.reverse
     ast      =
@@ -52,7 +54,7 @@ defmodule Earmark.AstRenderer do
   defp render_block(%Block.HtmlOneline{html: html}, context, _loose?) do
     render_html_oneline(html,context)
   end
-  defp render_block(%Block.HtmlComment{lines: lines}, context, _loose?) do
+  defp _render_block(%Block.HtmlComment{lines: lines}, context, _loose?) do
     lines1 =
       lines |> Enum.map(&render_html_comment_line/1)
     prepend(context, {:comment, lines1})
@@ -72,7 +74,7 @@ defmodule Earmark.AstRenderer do
   ###########
   # Heading #
   ###########
-  defp render_block(
+  defp _render_block(
          %Block.Heading{lnb: lnb, level: level, content: content, attrs: attrs},
          context, _loose?
        ) do
@@ -90,7 +92,7 @@ defmodule Earmark.AstRenderer do
   #########
   # Table #
   #########
-  defp render_block(
+  defp _render_block(
          %Block.Table{lnb: lnb, header: header, rows: rows, alignments: aligns, attrs: attrs},
          context, _loose?
        ) do
@@ -109,7 +111,7 @@ defmodule Earmark.AstRenderer do
   ########
   # Code #
   ########
-  defp render_block(
+  defp _render_block(
          %Block.Code{language: language, attrs: attrs} = block,
          context = %Context{options: options}, _loose?
        ) do
@@ -124,7 +126,7 @@ defmodule Earmark.AstRenderer do
   # Lists #
   #########
   @start_rgx ~r{\A\d+}
-  defp render_block(
+  defp _render_block(
          %Block.List{type: type, bullet: bullet, blocks: items, attrs: attrs},
          context, _loose?
        ) do
@@ -163,12 +165,13 @@ defmodule Earmark.AstRenderer do
   # Footnote Block #
   ##################
 
-  defp render_block(%Block.FnList{blocks: footnotes}, context, _loose?) do
-    items =
-      Enum.map(footnotes, fn note ->
-        blocks = append_footnote_link(note)
-        %Block.ListItem{attrs: %{id: ["#fn:#{note.number}"]}, type: :ol, blocks: blocks}
-      end)
+  defp _render_block(%Block.FnDef{}, context, _loose?) do
+    {context, []}
+    # items =
+    #   Enum.map(footnotes, fn note ->
+    #     blocks = append_footnote_link(note)
+    #     %Block.ListItem{attrs: %{id: ["#fn:#{note.number}"]}, type: :ol, blocks: blocks}
+    #   end)
 
     prepend(context, render_footnote_list(items))
   end
@@ -187,6 +190,10 @@ defmodule Earmark.AstRenderer do
 
   defp render_block(%Block.IdDef{}, context, _loose?), do: context
 
+  defp _render_footnotes(ast, context) do
+    IO.inspect ast
+    IO.inspect context
+  end
 
   defp append_footnote_link(note)
   defp append_footnote_link(note = %Block.FnDef{}) do
