@@ -59,7 +59,7 @@ defmodule Earmark.Helpers.HtmlParser do
   # Iterate over lines inside a tag
   # -------------------------------
 
-  @verbatim %{meta: %{verbatim: true}}
+  @verbatim %{verbatim: true}
   defp _parse_rest(rest, tag_tpl, lines)
   # Hu? That should never have happened but let us return some
   # sensible data, allowing rendering after the corruped block

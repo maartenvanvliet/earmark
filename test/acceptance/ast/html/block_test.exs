@@ -3,14 +3,15 @@ defmodule Acceptance.Ast.Html.BlockTest do
   import Support.Helpers, only: [as_ast: 1, parse_html: 1]
   import Support.AstHelpers, only: [p: 1, void_tag: 1]
   
-  @verbatim %{meta: %{verbatim: true}}
+  @default  %{}
+  @verbatim %{verbatim: true}
 
   describe "HTML blocks" do
     test "tables are just tables again (or was that mountains?)" do
       markdown = "<table>\n  <tr>\n    <td>\n           hi\n    </td>\n  </tr>\n</table>\n\nokay.\n"
       ast      = [
         {"table", [], ["  <tr>", "    <td>", "           hi", "    </td>", "  </tr>"], @verbatim},
-        {"p", [], ["okay."]}]
+        {"p", [], ["okay."], @default}]
       messages = []
 
       assert as_ast(markdown) == {:ok, ast, messages}
@@ -45,7 +46,12 @@ defmodule Acceptance.Ast.Html.BlockTest do
     test "area" do
       markdown = "<area shape=\"rect\" coords=\"0,0,1,1\" href=\"xxx\" alt=\"yyy\">\n**emphasized** text"
       html     = "<area shape=\"rect\" coords=\"0,0,1,1\" href=\"xxx\" alt=\"yyy\"><p><strong>emphasized</strong> text</p>\n"
-      ast      = parse_html(html)
+      ast      = [
+        {"area",
+         [{"shape", "rect"}, {"coords", "0,0,1,1"}, {"href", "xxx"}, {"alt", "yyy"}],
+         [], @default},
+        {"p", [], [{"strong", [], ["emphasized"], @default}, " text"], @default}
+      ]
       messages = []
 
       assert as_ast(markdown) == {:ok, ast, messages}
@@ -54,7 +60,9 @@ defmodule Acceptance.Ast.Html.BlockTest do
     test "we are outside the void now (lucky us)" do
       markdown = "<br>\n**emphasized** text"
       html     = "<br><p><strong>emphasized</strong> text</p>\n"
-      ast      = parse_html(html)
+      ast      = [
+        {"br", [], [], @default},
+        {"p", [], [{"strong", [], ["emphasized"], @default}, " text"], @default}]
       messages = []
 
       assert as_ast(markdown) == {:ok, ast, messages}
@@ -63,7 +71,9 @@ defmodule Acceptance.Ast.Html.BlockTest do
     test "high regards???" do
       markdown = "<hr>\n**emphasized** text"
       html     = "<hr><p><strong>emphasized</strong> text</p>\n"
-      ast      = parse_html(html)
+      ast      = [
+        {"hr", [], [], @default},
+        {"p", [], [{"strong", [], ["emphasized"], @default}, " text"], @default}]
       messages = []
 
       assert as_ast(markdown) == {:ok, ast, messages}
@@ -72,7 +82,10 @@ defmodule Acceptance.Ast.Html.BlockTest do
     test "img (a punless test)" do
       markdown = "<img src=\"hello\">\n**emphasized** text"
       html     = "<img src=\"hello\"><p><strong>emphasized</strong> text</p>\n"
-      ast      = parse_html(html)
+      ast      = [
+        {"img", [{"src", "hello"}], [], @default},
+        {"p", [], [{"strong", [], ["emphasized"], @default}, " text"], @default}
+      ]
       messages = []
 
       assert as_ast(markdown) == {:ok, ast, messages}
@@ -80,8 +93,10 @@ defmodule Acceptance.Ast.Html.BlockTest do
 
     test "not everybody knows this one (hint: take a break)" do
       markdown = "<wbr>\n**emphasized** text"
-      html = "<wbr><p><strong>emphasized</strong> text</p>\n"
-      ast      = parse_html(html)
+      html     = "<wbr><p><strong>emphasized</strong> text</p>\n"
+      ast      = [
+        {"wbr", [], [], @default},
+        {"p", [], [{"strong", [], ["emphasized"], @default}, " text"], @default}]
       messages = []
       assert as_ast(markdown) == {:ok, ast, messages}
     end
