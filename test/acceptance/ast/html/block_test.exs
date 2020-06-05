@@ -195,6 +195,13 @@ defmodule Acceptance.Ast.Html.BlockTest do
 
       assert as_ast(markdown) == {:ok, ast, messages}
     end
+    test "parses unquoted attrs" do
+      markdown = "<div class=my-div>\nline<div>"
+      ast      = [{"div", [{"class", "my-div"}], ["line"], @verbatim}]
+      messages = []
+
+      assert as_ast(markdown) == {:ok, ast, messages}
+    end
     test "this is not closing" do
       markdown = "<div>\nline\n</hello></div>"
       ast      = [{"div", [], ["line", "</hello></div>"], @verbatim}]
